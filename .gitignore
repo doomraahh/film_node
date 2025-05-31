@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+npm-debug.log*
+
+# Build output
+dist/
+build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Prisma generated files
+/generated/
+/prisma/migrations/*/migration_lock.toml
+
+# Ignore .env file with secrets (если он не должен попадать в репозиторий)
+.env
+
+# VS Code settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Ignore wasm binaries if not needed in repo
+**/*.wasm.js
+**/*.wasm.d.ts
+
+# Ignore generated Prisma client
+**/runtime/
