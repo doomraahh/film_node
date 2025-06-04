@@ -2,38 +2,67 @@ import { Elysia } from 'elysia'
 import { cors } from '@elysiajs/cors'
 import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient()
-const app = new Elysia()
-  .use(cors())
-  .post('/api/movies', async ({ body }) => {
-    const movie = await prisma.movie.create({
-      data: body as any
+class MovieController {
+  private prisma: PrismaClient
+
+  constructor(prisma: PrismaClient) {
+    this.prisma = prisma
+  }
+
+  async createMovie({ body }: { body: any }) {
+    const movie = await this.prisma.movie.create({
+      data: body
     })
     return movie
-  })
-  .get('/api/movies/:id', async ({ params: { id } }) => {
-    const movie = await prisma.movie.findUnique({
+  }
+
+  async getMovieById({ params: { id } }: { params: { id: string } }) {
+    const movie = await this.prisma.movie.findUnique({
       where: { id: Number(id) }
     })
+
     if (!movie) {
       return new Response('Movie not found', { status: 404 })
     }
+
     return movie
-  })
-  .get('/api/movies', async () => {
-    const movies = await prisma.movie.findMany()
-    return movies
-  })
-  .delete('/api/movies/:id', async ({ params: { id } }) => {
+  }
+
+  async getAllMovies() {
+    return await this.prisma.movie.findMany()
+  }
+
+  async deleteMovie({ params: { id } }: { params: { id: string } }) {
     try {
-      const movie = await prisma.movie.delete({
+      const movie = await this.prisma.movie.delete({
         where: { id: Number(id) }
       })
       return movie
     } catch (error) {
       return new Response('Movie not found', { status: 404 })
     }
-  })
-  .listen(3000)
+  }
+}
 
-console.log(`🦊 Server is running at ${app.server?.hostname}:${app.server?.port}`) 
+class MovieApp {
+  private app: Elysia
+  private movieController: MovieController
+
+  constructor() {
+    const prisma = new PrismaClient()
+    this.movieController = new MovieController(prisma)
+    this.app = new Elysia()
+      .use(cors())
+      .post('/api/movies', (ctx) => this.movieController.createMovie(ctx))
+      .get('/api/movies/:id', (ctx) => this.movieController.getMovieById(ctx))
+      .get('/api/movies', () => this.movieController.getAllMovies())
+      .delete('/api/movies/:id', (ctx) => this.movieController.deleteMovie(ctx))
+  }
+
+  listen(port: number) {
+    this.app.listen(port)
+    console.log(`🦊 Server is running at ${this.app.server?.hostname}:${this.app.server?.port}`)
+  }
+}
+
+new MovieApp().listen(3000)
